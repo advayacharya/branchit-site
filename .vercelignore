@@ -1,0 +1,12 @@
+.scratch/
+design/
+docs/
+scripts/
+node_modules/
+package.json
+package-lock.json
+.git/
+.gitignore
+AGENTS.md
+CONTEXT.md
+CONTEXT-MAP.md

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "branchit-site",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "serve@14", "-p", "4179", "-L", "."],
+      "port": 4179
+    }
+  ]
+}

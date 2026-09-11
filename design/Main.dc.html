@@ -1,0 +1,491 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1a1a1a; background: #faf9f5; }
+    a { color: #134e39; } a:hover { color: #0e3d2c; }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', system-ui, sans-serif; letter-spacing: -0.02em; margin: 0; }
+    code { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+    /* Branch background — turned up */
+    .branch { fill: none; stroke: #134e39; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 900; stroke-dashoffset: 900; animation: draw-b 14s ease-in-out infinite; }
+    .b-l1 { stroke-width: 2.2; opacity: 0.55; }
+    .b-l2 { stroke-width: 1.7; opacity: 0.38; animation-duration: 18s; }
+    .b-l3 { stroke-width: 1.2; opacity: 0.26; animation-duration: 22s; }
+    .b-node { fill: #134e39; opacity: 0; animation: pop-n 14s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes draw-b {
+      0%   { stroke-dashoffset: 900; }
+      30%  { stroke-dashoffset: 0; }
+      75%  { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -900; }
+    }
+    @keyframes pop-n {
+      0%, 25% { opacity: 0; transform: scale(0); }
+      40%     { opacity: 0.75; transform: scale(1); }
+      78%     { opacity: 0.75; }
+      100%    { opacity: 0; transform: scale(1); }
+    }
+
+    /* Motion primitives */
+    @keyframes breathe { 0%,100% { transform: scale(1); opacity: 0.35; } 50% { transform: scale(1.08); opacity: 0.55; } }
+    @keyframes softpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(19,78,57,0.35);} 50% { box-shadow: 0 0 0 14px rgba(19,78,57,0);} }
+    @keyframes bob { 0%,100% { transform: translateY(0);} 50% { transform: translateY(6px);} }
+    @keyframes dotpulse { 0%,100% { transform: scale(1); opacity: 1;} 50% { transform: scale(1.6); opacity: 0.5;} }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* AI-newsletter meta labels (no pills) */
+    .meta-label {
+      display: inline-flex; align-items: center; gap: 12px;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: #486a55;
+    }
+    .meta-label::before {
+      content: ''; width: 32px; height: 1px; background: currentColor;
+    }
+    .meta-label.on-dark { color: #7a9a85; }
+    .step-index {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: #7a9a85;
+    }
+
+    .cta-primary {
+      position: relative; display: inline-flex; align-items: center; gap: 10px;
+      background: #134e39; color: #faf9f5; padding: 15px 22px; border-radius: 4px;
+      font-weight: 600; font-size: 15px; text-decoration: none;
+      transition: transform 0.2s ease, background 0.2s ease;
+      animation: softpulse 2.4s ease-in-out infinite;
+    }
+    .cta-primary:hover { background: #0e3d2c; color: #faf9f5; transform: translateY(-1px); }
+
+    .why-card {
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      padding: 28px; border: 1px solid #d4d0c1; border-radius: 6px; background: rgba(250,249,245,0.85);
+    }
+    .why-card:hover {
+      transform: translateY(-6px); border-color: #134e39;
+      box-shadow: 0 12px 32px -12px rgba(19,78,57,0.28);
+    }
+
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #486a55; animation: dotpulse 1.8s ease-in-out infinite; }
+    .scroll-hint svg { animation: bob 1.6s ease-in-out infinite; }
+    .hero-glow {
+      position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+      width: 720px; height: 480px; border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(72,106,85,0.22), transparent 72%);
+      filter: blur(24px); animation: breathe 5s ease-in-out infinite;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Install redesign */
+    .install-num {
+      position: absolute; top: -30px; font-family: 'Space Grotesk';
+      font-size: 220px; font-weight: 700; color: rgba(122, 154, 133, 0.11);
+      letter-spacing: -0.06em; line-height: 0.85; pointer-events: none; user-select: none; z-index: 0;
+    }
+    .install-num.left  { left: -20px; }
+    .install-num.right { right: -20px; }
+    .step-mock-lg {
+      background: linear-gradient(180deg, #26261f 0%, #1e1e19 100%);
+      border: 1px solid #33332a; border-radius: 12px;
+      padding: 32px; min-height: 320px; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 24px 60px -20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+    .install-spine { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 0; pointer-events: none; }
+    .install-spine .seg {
+      stroke: #486a55; stroke-width: 1.6; fill: none;
+      stroke-dasharray: 600; stroke-dashoffset: 600;
+      animation: draw-spine 10s ease-in-out infinite;
+    }
+    @keyframes draw-spine {
+      0%   { stroke-dashoffset: 600; opacity: 0.2; }
+      50%  { stroke-dashoffset: 0; opacity: 0.7; }
+      100% { stroke-dashoffset: -600; opacity: 0.2; }
+    }
+  </style>
+</helmet>
+<div style="width: 1440px; background: #faf9f5; position: relative; overflow: hidden;">
+
+  <!-- BRANCH NETWORK BACKGROUND — turned up, denser -->
+  <svg width="1440" height="2450" viewBox="0 0 1440 2450" style="position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none;" preserveAspectRatio="none">
+    <!-- Primary layer -->
+    <path class="branch b-l1" d="M 80 180 C 160 240, 240 300, 340 280 C 460 260, 560 200, 700 220"/>
+    <path class="branch b-l1" d="M 700 220 C 820 240, 960 280, 1080 230 C 1200 180, 1320 200, 1400 260" style="animation-delay: 0.5s;"/>
+    <path class="branch b-l1" d="M 200 480 C 300 520, 420 500, 540 440 C 660 380, 800 380, 940 420" style="animation-delay: 1.2s;"/>
+    <path class="branch b-l1" d="M 940 420 C 1080 460, 1220 500, 1360 480" style="animation-delay: 2.0s;"/>
+    <path class="branch b-l1" d="M 60 920 C 180 960, 320 1000, 480 970 C 620 940, 760 900, 900 940" style="animation-delay: 3.0s;"/>
+    <path class="branch b-l1" d="M 900 940 C 1040 980, 1200 1020, 1380 990" style="animation-delay: 3.7s;"/>
+    <path class="branch b-l1" d="M 120 1280 C 240 1340, 400 1380, 540 1320 C 700 1260, 860 1240, 1020 1300" style="animation-delay: 4.4s;"/>
+    <path class="branch b-l1" d="M 1020 1300 C 1160 1340, 1300 1380, 1400 1360" style="animation-delay: 5.1s;"/>
+    <path class="branch b-l1" d="M 80 1780 C 220 1820, 380 1860, 540 1820 C 700 1780, 860 1780, 1020 1820" style="animation-delay: 5.6s;"/>
+    <path class="branch b-l1" d="M 1020 1820 C 1180 1860, 1320 1880, 1400 1860" style="animation-delay: 6.3s;"/>
+    <path class="branch b-l1" d="M 200 2160 C 340 2200, 500 2220, 660 2180 C 820 2140, 980 2140, 1140 2180" style="animation-delay: 7.0s;"/>
+
+    <!-- Secondary layer -->
+    <path class="branch b-l2" d="M 340 280 C 320 340, 300 400, 340 460" style="animation-delay: 1.8s;"/>
+    <path class="branch b-l2" d="M 540 440 C 560 500, 580 560, 620 600" style="animation-delay: 2.4s;"/>
+    <path class="branch b-l2" d="M 1080 230 C 1120 300, 1140 360, 1120 420" style="animation-delay: 3.1s;"/>
+    <path class="branch b-l2" d="M 480 970 C 460 1040, 440 1100, 460 1160" style="animation-delay: 4.2s;"/>
+    <path class="branch b-l2" d="M 900 940 C 940 1000, 960 1060, 940 1120" style="animation-delay: 4.8s;"/>
+    <path class="branch b-l2" d="M 540 1320 C 520 1380, 500 1440, 520 1500" style="animation-delay: 5.7s;"/>
+    <path class="branch b-l2" d="M 1020 1300 C 1060 1360, 1080 1420, 1060 1480" style="animation-delay: 6.4s;"/>
+    <path class="branch b-l2" d="M 540 1820 C 520 1880, 500 1940, 520 2000" style="animation-delay: 7.2s;"/>
+    <path class="branch b-l2" d="M 1020 1820 C 1060 1880, 1080 1940, 1060 2000" style="animation-delay: 7.8s;"/>
+    <path class="branch b-l2" d="M 660 2180 C 640 2240, 620 2300, 640 2360" style="animation-delay: 8.2s;"/>
+
+    <!-- Accent tendrils -->
+    <path class="branch b-l3" d="M 220 320 C 250 340, 280 350, 310 355"/>
+    <path class="branch b-l3" d="M 780 260 C 810 280, 830 295, 850 310" style="animation-delay: 2.7s;"/>
+    <path class="branch b-l3" d="M 460 500 C 430 510, 400 515, 380 520" style="animation-delay: 3.5s;"/>
+    <path class="branch b-l3" d="M 1180 250 C 1220 280, 1250 300, 1275 310" style="animation-delay: 4.5s;"/>
+    <path class="branch b-l3" d="M 620 990 C 650 1010, 680 1015, 705 1020" style="animation-delay: 5.3s;"/>
+    <path class="branch b-l3" d="M 380 1360 C 410 1380, 440 1385, 460 1388" style="animation-delay: 6.0s;"/>
+    <path class="branch b-l3" d="M 860 1300 C 890 1315, 910 1320, 935 1325" style="animation-delay: 7.5s;"/>
+    <path class="branch b-l3" d="M 820 2200 C 850 2215, 875 2220, 900 2225" style="animation-delay: 8.5s;"/>
+
+    <!-- Nodes at junctions -->
+    <circle class="b-node" cx="340"  cy="280"  r="5"/>
+    <circle class="b-node" cx="700"  cy="220"  r="5" style="animation-delay: 1.0s;"/>
+    <circle class="b-node" cx="1080" cy="230"  r="5" style="animation-delay: 2.0s;"/>
+    <circle class="b-node" cx="540"  cy="440"  r="5" style="animation-delay: 2.8s;"/>
+    <circle class="b-node" cx="940"  cy="420"  r="5" style="animation-delay: 3.6s;"/>
+    <circle class="b-node" cx="480"  cy="970"  r="5" style="animation-delay: 4.4s;"/>
+    <circle class="b-node" cx="900"  cy="940"  r="5" style="animation-delay: 5.2s;"/>
+    <circle class="b-node" cx="540"  cy="1320" r="5" style="animation-delay: 6.0s;"/>
+    <circle class="b-node" cx="1020" cy="1300" r="5" style="animation-delay: 6.8s;"/>
+    <circle class="b-node" cx="540"  cy="1820" r="5" style="animation-delay: 7.4s;"/>
+    <circle class="b-node" cx="1020" cy="1820" r="5" style="animation-delay: 8.0s;"/>
+    <circle class="b-node" cx="660"  cy="2180" r="5" style="animation-delay: 8.6s;"/>
+  </svg>
+
+  <!-- Nav -->
+  <nav style="display: flex; justify-content: space-between; align-items: center; padding: 24px 80px; border-bottom: 1px solid rgba(232, 230, 220, 0.6); position: relative; z-index: 3; backdrop-filter: blur(6px); background: rgba(250, 249, 245, 0.7);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#134e39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+      <span style="font-family: 'Space Grotesk'; font-weight: 700; font-size: 20px; letter-spacing: -0.01em;">Branchit</span>
+    </div>
+    <div style="display: flex; gap: 32px; align-items: center; font-size: 14px;">
+      <a href="#what" style="color: #666; text-decoration: none;">What is branching?</a>
+      <a href="#install" style="color: #666; text-decoration: none;">Install</a>
+      <a href="#" style="display: inline-flex; align-items: center; gap: 8px; background: #134e39; color: #faf9f5; padding: 10px 16px; border-radius: 4px; font-weight: 600; text-decoration: none;">Download</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section style="padding: 130px 80px 110px; text-align: center; position: relative; z-index: 1;">
+    <div class="hero-glow"></div>
+    <div style="position: relative; z-index: 1;">
+      <div style="display: inline-flex; align-items: center; gap: 12px; font-family: 'IBM Plex Mono'; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #486a55;">
+        <span class="live-dot"></span>
+        <span style="width: 24px; height: 1px; background: currentColor;"></span>
+        A hidden ChatGPT feature
+      </div>
+      <h1 style="font-size: 76px; line-height: 1.03; max-width: 960px; margin: 28px auto 24px; font-weight: 600; animation: fadeUp 0.6s ease-out both;">The ChatGPT feature you didn't know existed.</h1>
+      <p style="font-size: 20px; line-height: 1.5; color: #444; max-width: 640px; margin: 0 auto 40px; animation: fadeUp 0.6s ease-out 0.1s both;">Branchit turns ChatGPT's hidden <strong>"Branch in new chat"</strong> into a floating side-chat — so you can explore alternatives without leaving your main thread.</p>
+      <div style="display: flex; gap: 20px; justify-content: center; align-items: center; animation: fadeUp 0.6s ease-out 0.2s both;">
+        <a href="#" class="cta-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download branchit.zip
+        </a>
+        <a href="#install" class="scroll-hint" style="color: #666; text-decoration: none; font-size: 15px; display: inline-flex; align-items: center; gap: 6px;">
+          See how it works
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </a>
+      </div>
+      <p style="margin-top: 36px; font-size: 13px; color: #888;">Not yet on the Chrome Web Store — installation takes about 90 seconds.</p>
+    </div>
+
+    <!-- Mock browser preview -->
+    <div style="max-width: 960px; margin: 72px auto 0; border-radius: 12px; overflow: hidden; box-shadow: 0 24px 64px -20px rgba(19, 78, 57, 0.28), 0 8px 24px -8px rgba(0,0,0,0.12); border: 1px solid #d4d0c1; background: #212121; text-align: left; position: relative; z-index: 1;">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #171717; border-bottom: 1px solid #000;">
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f57;"></span>
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: #febc2e;"></span>
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: #28c840;"></span>
+        <div style="flex: 1; margin-left: 16px; background: #2b2b2b; border-radius: 6px; padding: 6px 14px; font-family: 'IBM Plex Mono'; font-size: 12px; color: #999;">chatgpt.com/c/electricity-cost-calculation</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 340px; min-height: 340px;">
+        <div style="padding: 32px 40px; background: #212121; color: #e5e5e5;">
+          <div style="font-family: 'Space Grotesk'; color: #f5f5f5; font-size: 15px; font-weight: 500; margin-bottom: 6px;">Then:</div>
+          <div style="border-left: 3px solid #4a4a4a; padding: 8px 14px; margin: 12px 0 20px; font-size: 14px;">Bill = Units consumed × Rate per unit</div>
+          <div style="font-family: 'Space Grotesk'; color: #f5f5f5; font-size: 15px; font-weight: 500; margin-bottom: 8px;">Example</div>
+          <ul style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.7; color: #d5d5d5;">
+            <li>Previous month's reading: <strong>2850.0 kWh</strong></li>
+            <li>Current reading: <strong>2986.2 kWh</strong></li>
+            <li>Units used in 30 days = 2986.2 − 2850.0 = 136.2 units</li>
+          </ul>
+        </div>
+        <div style="background: #2a2a2a; border-left: 1px solid #3a3a3a; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #3a3a3a;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a9a85" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+              <span style="font-size: 13px; color: #f5f5f5; font-weight: 500;">Side chat</span>
+            </div>
+            <span style="color: #888; font-size: 16px; cursor: pointer;">×</span>
+          </div>
+          <div style="padding: 16px 14px; flex: 1;">
+            <p style="font-size: 12.5px; line-height: 1.55; color: #e5e5e5; margin: 0 0 10px;">Without the <strong>previous month's reading</strong>, it's impossible to know the 30-day cost — the meter doesn't reset every month.</p>
+            <p style="font-size: 12.5px; line-height: 1.55; color: #e5e5e5; margin: 0;">If you give me the previous reading (or your last bill), I'll calculate the exact amount.</p>
+            <div style="margin: 18px 0 10px; display: flex; align-items: center; gap: 8px;">
+              <div style="flex: 1; height: 1px; background: #3a3a3a;"></div>
+              <span style="font-size: 10px; color: #888;">Branched from Electricity cost</span>
+              <div style="flex: 1; height: 1px; background: #3a3a3a;"></div>
+            </div>
+            <div style="background: #383838; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #d5d5d5; line-height: 1.5;">
+              &gt; The meter reading itself is not "for 30 days." It is a cumulative reading since the meter was installed.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top: 20px; font-size: 12px; color: #999; font-style: italic; position: relative; z-index: 1;">preview — the floating side-chat that Branchit adds to ChatGPT</p>
+  </section>
+
+  <!-- Divider -->
+  <div style="border-top: 1px solid #e8e6dc; margin: 0 80px; position: relative; z-index: 1;"></div>
+
+  <!-- What is the Branch feature? -->
+  <section id="what" style="padding: 112px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; position: relative; z-index: 1;">
+    <div>
+      <div class="meta-label">The hidden feature</div>
+      <h2 style="font-size: 44px; line-height: 1.1; margin: 20px 0 24px; font-weight: 600;">First, a feature ChatGPT never told you about.</h2>
+      <p style="font-size: 17px; line-height: 1.6; color: #444; margin: 0;">Right-click any message in ChatGPT and you'll find <strong>"Branch in new chat"</strong> — a native feature that forks the conversation into a new thread from that point.</p>
+      <p style="font-size: 17px; line-height: 1.6; color: #444; margin: 16px 0 0;">It's genuinely useful. It's also genuinely hidden — you have to know it exists to find it. Which is why almost no one uses it.</p>
+    </div>
+    <div style="background: #212121; border-radius: 10px; padding: 24px; box-shadow: 0 12px 32px -12px rgba(0,0,0,0.28); border: 1px solid #d4d0c1;">
+      <div style="background: #2a2a2a; border-radius: 8px; padding: 14px 16px; color: #e5e5e5; font-size: 13px; line-height: 1.55; position: relative;">
+        Can you break down how the tariff is calculated for a residential connection?
+        <div style="position: absolute; right: -80px; top: 20px; width: 220px; background: #2f2f2f; border: 1px solid #3a3a3a; border-radius: 8px; box-shadow: 0 12px 32px -8px rgba(0,0,0,0.45); overflow: hidden;">
+          <div style="padding: 10px 14px; font-size: 12px; color: #e5e5e5; border-bottom: 1px solid #3a3a3a; display: flex; align-items: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </div>
+          <div style="padding: 10px 14px; font-size: 12px; color: #7a9a85; background: rgba(122,154,133,0.10); display: flex; align-items: center; gap: 8px; font-weight: 500;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+            Branch in new chat
+          </div>
+          <div style="padding: 10px 14px; font-size: 12px; color: #e5e5e5; border-top: 1px solid #3a3a3a; display: flex; align-items: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+            Report
+          </div>
+        </div>
+      </div>
+      <p style="font-size: 11px; color: #999; text-align: center; margin: 24px 0 0; font-family: 'IBM Plex Mono';">Screenshot A → real: ChatGPT's context menu with "Branch in new chat"</p>
+    </div>
+  </section>
+
+  <!-- Why you'd want it -->
+  <section style="padding: 112px 80px; background: rgba(242, 240, 230, 0.85); position: relative; z-index: 1; backdrop-filter: blur(2px);">
+    <div style="max-width: 1120px; margin: 0 auto;">
+      <div class="meta-label">Why bother</div>
+      <h2 style="font-size: 44px; line-height: 1.1; margin: 20px 0 60px; font-weight: 600; max-width: 720px;">Three reasons you'll use it every day.</h2>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px;">
+        <div class="why-card">
+          <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #faf9f5; border: 1px solid #d4d0c1; border-radius: 4px; margin-bottom: 24px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#134e39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          </div>
+          <h3 style="font-size: 22px; margin: 0 0 12px; font-weight: 600;">Explore without polluting</h3>
+          <p style="font-size: 15px; line-height: 1.55; color: #555; margin: 0;">Try a different phrasing, a wild tangent, a follow-up experiment — without ever cluttering the chat you care about.</p>
+        </div>
+        <div class="why-card">
+          <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #faf9f5; border: 1px solid #d4d0c1; border-radius: 4px; margin-bottom: 24px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#134e39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="16" rx="1"/><rect x="14" y="4" width="7" height="16" rx="1"/></svg>
+          </div>
+          <h3 style="font-size: 22px; margin: 0 0 12px; font-weight: 600;">Compare side by side</h3>
+          <p style="font-size: 15px; line-height: 1.55; color: #555; margin: 0;">See two branches next to each other — instead of scrolling back and forth to remember what the other version said.</p>
+        </div>
+        <div class="why-card">
+          <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #faf9f5; border: 1px solid #d4d0c1; border-radius: 4px; margin-bottom: 24px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#134e39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>
+          </div>
+          <h3 style="font-size: 22px; margin: 0 0 12px; font-weight: 600;">Keep long threads organized</h3>
+          <p style="font-size: 15px; line-height: 1.55; color: #555; margin: 0;">Fork off sub-topics before they drown out the main conversation. Come back to them when you want.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install (alternating chapters, no pills) -->
+  <section id="install" style="padding: 120px 80px 140px; background: #1a1a17; color: #f5f4ea; position: relative; overflow: hidden;">
+    <!-- Section header -->
+    <div style="max-width: 1120px; margin: 0 auto 96px; text-align: center;">
+      <div class="meta-label on-dark" style="justify-content: center;">Install</div>
+      <h2 style="font-size: 56px; line-height: 1.05; margin: 24px 0 20px; font-weight: 600; color: #faf9f5; letter-spacing: -0.02em;">Five steps. About ninety seconds.</h2>
+      <p style="font-size: 18px; line-height: 1.6; color: #b8b4a2; max-width: 680px; margin: 0 auto;">Not on the Chrome Web Store yet, so installation goes through Developer mode. Works on any Chromium browser — Chrome, Edge, Brave, Arc, Vivaldi.</p>
+    </div>
+
+    <div style="max-width: 1120px; margin: 0 auto; position: relative;">
+      <svg class="install-spine" preserveAspectRatio="none" viewBox="0 0 2 2400" style="height: 100%;">
+        <path class="seg" d="M 1 0 C 1 400, 1 400, 1 800"/>
+        <path class="seg" d="M 1 800 C 1 1200, 1 1200, 1 1600" style="animation-delay: 1.5s;"/>
+        <path class="seg" d="M 1 1600 C 1 2000, 1 2000, 1 2400" style="animation-delay: 3s;"/>
+      </svg>
+
+      <!-- STEP 01 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; margin-bottom: 120px; position: relative;">
+        <span class="install-num left">01</span>
+        <div style="position: relative; z-index: 2;">
+          <div class="step-index">01 / 05</div>
+          <h3 style="font-size: 36px; line-height: 1.15; margin: 18px 0 20px; color: #faf9f5; font-weight: 600; letter-spacing: -0.01em;">Grab <code style="color: #7a9a85; background: #26261f; padding: 4px 12px; border-radius: 4px; font-size: 28px;">branchit.zip</code></h3>
+          <p style="font-size: 16px; line-height: 1.65; color: #b8b4a2; margin: 0; max-width: 440px;">One file, about fifty kilobytes. Click the download button in the top-right — it lands in your Downloads folder immediately.</p>
+        </div>
+        <div class="step-mock-lg" style="flex-direction: column; gap: 20px;">
+          <div style="width: 100%; display: flex; align-items: center; gap: 16px; background: #1a1a17; padding: 18px 22px; border-radius: 10px; border: 1px solid #2a2a24;">
+            <div style="width: 44px; height: 44px; background: rgba(122,154,133,0.12); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7a9a85" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-family: 'IBM Plex Mono'; font-size: 13px; color: #f5f4ea;">branchit.zip</div>
+              <div style="font-family: 'IBM Plex Mono'; font-size: 11px; color: #888;">48.2 KB · zip archive</div>
+            </div>
+            <div style="width: 140px; height: 4px; background: #2a2a24; border-radius: 999px; overflow: hidden;">
+              <div style="width: 82%; height: 100%; background: linear-gradient(90deg, #486a55, #7a9a85);"></div>
+            </div>
+          </div>
+          <a href="#" style="display: inline-flex; align-items: center; gap: 10px; background: #134e39; color: #faf9f5; padding: 14px 22px; border-radius: 4px; font-weight: 600; font-size: 14px; text-decoration: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download branchit.zip
+          </a>
+        </div>
+      </div>
+
+      <!-- STEP 02 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; margin-bottom: 120px; position: relative;">
+        <span class="install-num right">02</span>
+        <div class="step-mock-lg" style="flex-direction: column; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 24px;">
+            <div style="text-align: center;">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7a9a85" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+              <div style="font-family: 'IBM Plex Mono'; font-size: 11px; color: #888; margin-top: 8px;">branchit.zip</div>
+            </div>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#486a55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>
+            <div style="text-align: center;">
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7a9a85" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <div style="font-family: 'IBM Plex Mono'; font-size: 11px; color: #7a9a85; margin-top: 8px;">branchit/</div>
+            </div>
+          </div>
+          <div style="width: 100%; padding: 14px 20px; background: #1a1a17; border-radius: 8px; border: 1px solid #2a2a24; font-family: 'IBM Plex Mono'; font-size: 12px; color: #b8b4a2;">
+            <span style="color: #7a9a85;">$</span> right-click <span style="color: #f5f4ea;">branchit.zip</span> → <span style="color: #f5f4ea;">Extract All…</span>
+          </div>
+        </div>
+        <div style="position: relative; z-index: 2;">
+          <div class="step-index">02 / 05</div>
+          <h3 style="font-size: 36px; line-height: 1.15; margin: 18px 0 20px; color: #faf9f5; font-weight: 600; letter-spacing: -0.01em;">Unzip it into a folder.</h3>
+          <p style="font-size: 16px; line-height: 1.65; color: #b8b4a2; margin: 0 0 12px; max-width: 440px;">Chrome can't load a zip directly — it needs the extracted folder. Right-click the file, hit <strong>Extract All</strong>, and remember where <code style="color: #7a9a85; background: #26261f; padding: 2px 6px; border-radius: 3px; font-size: 13px;">branchit/</code> lands.</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #7a7365; margin: 0; max-width: 440px;">On Windows the zip's built-in "Extract All" is fine. On Mac, double-clicking the zip does it automatically.</p>
+        </div>
+      </div>
+
+      <!-- STEP 03 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; margin-bottom: 120px; position: relative;">
+        <span class="install-num left">03</span>
+        <div style="position: relative; z-index: 2;">
+          <div class="step-index">03 / 05</div>
+          <h3 style="font-size: 36px; line-height: 1.15; margin: 18px 0 20px; color: #faf9f5; font-weight: 600; letter-spacing: -0.01em;">Turn on Developer mode.</h3>
+          <p style="font-size: 16px; line-height: 1.65; color: #b8b4a2; margin: 0 0 12px; max-width: 440px;">Paste <code style="color: #7a9a85; background: #26261f; padding: 2px 6px; border-radius: 3px; font-size: 13px;">chrome://extensions</code> into the address bar. Top-right corner: toggle <strong>Developer mode</strong>. New buttons appear along the top.</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #7a7365; margin: 0; max-width: 440px;">Same URL works on Edge, Brave, Arc — anything Chromium.</p>
+        </div>
+        <div class="step-mock-lg" style="flex-direction: column; gap: 16px;">
+          <div style="width: 100%; padding: 12px 16px; background: #1a1a17; border-radius: 8px; border: 1px solid #2a2a24; display: flex; align-items: center; gap: 10px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span style="font-family: 'IBM Plex Mono'; font-size: 13px; color: #f5f4ea;">chrome://extensions</span>
+          </div>
+          <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: #1a1a17; border-radius: 10px; border: 2px solid #486a55;">
+            <span style="font-family: 'Space Grotesk'; font-size: 18px; color: #f5f4ea;">Developer mode</span>
+            <span style="position: relative; width: 52px; height: 26px; background: #1e6bd1; border-radius: 999px; box-shadow: 0 0 20px rgba(30,107,209,0.35);">
+              <span style="position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.4);"></span>
+            </span>
+          </div>
+          <span style="font-family: 'IBM Plex Mono'; font-size: 10px; color: #7a9a85; letter-spacing: 0.06em; align-self: flex-end;">SCREENSHOT C →</span>
+        </div>
+      </div>
+
+      <!-- STEP 04 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; margin-bottom: 120px; position: relative;">
+        <span class="install-num right">04</span>
+        <div class="step-mock-lg" style="flex-direction: column; gap: 16px; align-items: stretch;">
+          <div style="width: 100%; padding: 18px 22px; background: #1a1a17; border-radius: 10px; border: 1px solid #2a2a24; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d5d5d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>
+              <span style="font-family: 'Space Grotesk'; font-size: 20px; color: #f5f5f5; font-weight: 600;">Extensions</span>
+            </div>
+            <span style="border: 1.5px solid #4a9dff; color: #4a9dff; padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 500; box-shadow: 0 0 20px rgba(74,157,255,0.3);">Load unpacked</span>
+          </div>
+          <div style="width: 100%; padding: 14px 20px; background: #1a1a17; border-radius: 8px; border: 1px dashed #486a55; font-family: 'IBM Plex Mono'; font-size: 12px; color: #7a9a85; text-align: center;">
+            → select the branchit/ folder in the picker
+          </div>
+          <span style="font-family: 'IBM Plex Mono'; font-size: 10px; color: #7a9a85; letter-spacing: 0.06em; align-self: flex-end;">SCREENSHOT D →</span>
+        </div>
+        <div style="position: relative; z-index: 2;">
+          <div class="step-index">04 / 05</div>
+          <h3 style="font-size: 36px; line-height: 1.15; margin: 18px 0 20px; color: #faf9f5; font-weight: 600; letter-spacing: -0.01em;">Click "Load unpacked."</h3>
+          <p style="font-size: 16px; line-height: 1.65; color: #b8b4a2; margin: 0 0 12px; max-width: 440px;">A new button appears top-left: <strong>Load unpacked</strong>. Click it. A folder-picker opens — point it at the <code style="color: #7a9a85; background: #26261f; padding: 2px 6px; border-radius: 3px; font-size: 13px;">branchit/</code> folder from step 2.</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #7a7365; margin: 0; max-width: 440px;">If Chrome complains, you missed the Developer-mode toggle in step 3.</p>
+        </div>
+      </div>
+
+      <!-- STEP 05 (final) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; position: relative;">
+        <span class="install-num left">05</span>
+        <div style="position: relative; z-index: 2;">
+          <div class="step-index" style="color: #7a9a85;">05 / 05 — Done</div>
+          <h3 style="font-size: 36px; line-height: 1.15; margin: 18px 0 20px; color: #faf9f5; font-weight: 600; letter-spacing: -0.01em;">You're in.</h3>
+          <p style="font-size: 16px; line-height: 1.65; color: #b8b4a2; margin: 0 0 12px; max-width: 440px;">Branchit sits in your extensions list. Open <strong>ChatGPT</strong>. Right-click any message, hit <strong>"Branch in new chat"</strong> — the floating side-chat slides in beside your main thread.</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #7a7365; margin: 0; max-width: 440px;">Nothing else to configure. That's the whole thing.</p>
+        </div>
+        <div class="step-mock-lg" style="flex-direction: column; gap: 16px; align-items: stretch;">
+          <div style="width: 100%; display: flex; align-items: center; gap: 14px; padding: 18px; background: #1a1a17; border-radius: 10px; border: 1px solid #486a55;">
+            <div style="width: 48px; height: 48px; background: #134e39; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7a9a85" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-family: 'Space Grotesk'; font-size: 15px; color: #f5f4ea; font-weight: 600;">Branchit</div>
+              <div style="font-family: 'IBM Plex Mono'; font-size: 11px; color: #888;">v0.2.0 · enabled · Chromium</div>
+            </div>
+            <span style="position: relative; width: 40px; height: 22px; background: #486a55; border-radius: 999px; box-shadow: 0 0 16px rgba(72,106,85,0.4);">
+              <span style="position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%;"></span>
+            </span>
+          </div>
+          <div style="width: 100%; padding: 12px 16px; background: rgba(72,106,85,0.10); border: 1px solid rgba(122,154,133,0.22); border-radius: 8px; font-family: 'IBM Plex Mono'; font-size: 12px; color: #7a9a85; display: flex; align-items: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Installed. Open chatgpt.com to try it.
+          </div>
+          <span style="font-family: 'IBM Plex Mono'; font-size: 10px; color: #7a9a85; letter-spacing: 0.06em; align-self: flex-end;">SCREENSHOT F →</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="padding: 56px 80px; background: #faf9f5; border-top: 1px solid #e8e6dc; position: relative; z-index: 1;">
+    <div style="max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1.4fr; gap: 40px; align-items: start;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#134e39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          <span style="font-family: 'Space Grotesk'; font-weight: 700; font-size: 16px;">Branchit</span>
+        </div>
+        <p style="font-size: 13px; color: #888; margin: 0;">Made by Advay Acharya · 2026</p>
+      </div>
+      <div>
+        <h4 style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin: 0 0 12px; font-family: 'IBM Plex Sans';">Contact</h4>
+        <p style="font-size: 14px; color: #444; margin: 0;"><a href="mailto:acharyaxdvay16@gmail.com" style="color: #134e39; text-decoration: none;">acharyaxdvay16@gmail.com</a></p>
+      </div>
+      <div>
+        <h4 style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin: 0 0 12px; font-family: 'IBM Plex Sans';">How to uninstall</h4>
+        <p style="font-size: 14px; color: #444; margin: 0; line-height: 1.5;">Open <code style="background: #ede9db; padding: 1px 5px; border-radius: 3px; font-size: 13px;">chrome://extensions</code>, find Branchit, click <strong>Remove</strong>.</p>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

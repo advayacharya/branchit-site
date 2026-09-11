@@ -1,0 +1,17 @@
+{
+  "name": "branchit-site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Landing page for the Branchit Chrome extension",
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:html && npm run test:anchors && npm run test:zip",
+    "test:html": "html-validate index.html",
+    "test:anchors": "node scripts/check-anchors.mjs",
+    "test:zip": "node scripts/check-zip.mjs"
+  },
+  "devDependencies": {
+    "html-validate": "^8.24.0",
+    "jszip": "^3.10.2"
+  }
+}
