@@ -13,5 +13,8 @@
   "devDependencies": {
     "html-validate": "^8.24.0",
     "jszip": "^3.10.2"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
   }
 }
